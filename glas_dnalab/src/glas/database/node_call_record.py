@@ -1,0 +1,51 @@
+"""
+This module contains the class used to interact with the `node_call_records` table in the database.
+"""
+
+from .connector import DatabaseConnector
+from .models import DBNodeCallRecordModel
+
+
+class DBNodeCallRecord:
+    # pylint: disable=missing-class-docstring
+    __tablename__ = "node_call_records"
+
+    @classmethod
+    def get_for_node(cls, db: DatabaseConnector, node_id: str):
+        sql = f"SELECT * FROM {cls.__tablename__} WHERE node_id=%s AND timestamp >= DATE_SUB(NOW(), INTERVAL 8 HOUR)"
+        data = (node_id,)
+        db.cursor.execute(sql, data)
+
+        return db.cursor.fetchall()
+
+    @classmethod
+    def get_statistics(cls, db: DatabaseConnector) -> list[DBNodeCallRecordModel]:
+        sql = """
+        SELECT 
+            n.id AS id,
+            n.name AS name,
+            endpoint,
+            COUNT(c.id) AS call_count,
+            AVG(c.duration) AS average_execution_duration,
+            MIN(c.duration) AS minimum_execution_duration,
+            MAX(c.duration) AS maximum_execution_duration,
+            IFNULL(SUM(CASE WHEN c.outcome = 'success' THEN 1 ELSE 0 END) / COUNT(c.id), 0) AS success_rate
+        FROM 
+            nodes n
+        LEFT JOIN 
+            node_call_records c ON n.id = c.node_id
+        WHERE
+            c.timestamp >= DATE_SUB(NOW(), INTERVAL 8 HOUR)
+        GROUP BY 
+            n.id, n.name, c.endpoint;
+        """
+        db.cursor.execute(sql)
+
+        return db.cursor.fetchall()
+
+    @classmethod
+    def insert(cls, db: DatabaseConnector, node_id: str, endpoint: str, message: str, duration: float,
+               outcome: str) -> None:
+        sql = f"INSERT INTO {cls.__tablename__}(node_id, endpoint, message, duration, outcome) VALUES (%s, %s, %s, %s, %s)"
+        data = (node_id, endpoint, message, duration, outcome)
+        db.cursor.execute(sql, data)

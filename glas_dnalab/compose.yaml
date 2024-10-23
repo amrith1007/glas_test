@@ -1,0 +1,35 @@
+services:
+  db:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: glas-database
+    env_file: ./src/glas/database/setup/.env
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      mars:
+        ipv4_address: 10.20.0.11
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: glas-phpmyadmin
+    restart: on-failure
+    ports:
+      - 8080:80
+    networks:
+      mars:
+        ipv4_address: 10.20.0.12
+
+networks:
+  mars:
+    name: mars
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24

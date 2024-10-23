@@ -1,0 +1,11 @@
+{
+    "workflows": [
+      {
+        "name": "my-workflow",
+        "steps": [
+          "node-1",
+          "node-2"
+        ]
+      }
+    ]
+  }

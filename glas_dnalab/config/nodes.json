@@ -1,0 +1,14 @@
+{
+    "nodes": [
+      {
+        "id": "node-1",
+        "name": "Node one",
+        "type": "FirstNode"
+      },
+      {
+        "id": "node-2",
+        "name": "Node two",
+        "type": "SecondNode"
+      }
+    ]
+  }
